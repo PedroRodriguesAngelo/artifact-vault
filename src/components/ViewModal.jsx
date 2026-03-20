@@ -73,7 +73,7 @@ export default function ViewModal({ artifact, onClose, onEdit, onDuplicate, onCo
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-5">
           {tab === 'render' && (
-            <div className="w-full rounded-lg border border-border bg-white overflow-hidden" style={{ height: 'min(600px, 70vh)' }}>
+            <div className="w-full rounded-lg border border-border overflow-hidden" style={{ height: 'min(600px, 70vh)' }}>
               <iframe
                 ref={frameRef}
                 sandbox="allow-scripts allow-same-origin"
