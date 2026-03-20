@@ -39,22 +39,22 @@ export function buildRenderableHTML(code, type) {
       usesTone ? '<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"><\\/script>' : '',
     ].filter(Boolean).join('\n')
 
-    // Limpa imports e export default, preservando todo o resto do código
+    // Limpa imports, preservando todo o resto do código
     let processedCode = code
-      .replace(/import\s+\{[^}]*\}\s+from\s+['"]react['"]\s*;?/g, '')
-      .replace(/import\s+React\s*,?\s*\{?[^}]*\}?\s*from\s+['"]react['"]\s*;?/g, '')
-      .replace(/import\s+\*\s+as\s+(\w+)\s+from\s+['"]([^'"]+)['"]\s*;?/g, '')
-      .replace(/import\s+(\w+)\s+from\s+['"]([^'"]+)['"]\s*;?/g, '')
-      .replace(/import\s+\{([^}]*)\}\s+from\s+['"]([^'"]+)['"]\s*;?/g, '')
-      .replace(/export\s+default\s+function\s+/g, 'function __App__$$ ')
-      .replace(/export\s+default\s+/g, 'const __App__$$ = ')
+      .replace(/import\s+\{[^}]*\}\s+from\s+['"]react['"]\s*;?\n?/g, '')
+      .replace(/import\s+React\s*,?\s*\{?[^}]*\}?\s*from\s+['"]react['"]\s*;?\n?/g, '')
+      .replace(/import\s+\*\s+as\s+\w+\s+from\s+['"][^'"]+['"]\s*;?\n?/g, '')
+      .replace(/import\s+\w+\s+from\s+['"][^'"]+['"]\s*;?\n?/g, '')
+      .replace(/import\s+\{[^}]*\}\s+from\s+['"][^'"]+['"]\s*;?\n?/g, '')
 
-    // Detecta o nome do componente exportado
-    const exportFuncMatch = processedCode.match(/function\s+__App__\$\$\s+(\w+)/)
-    const exportConstMatch = processedCode.match(/const\s+__App__\$\$\s*=\s*/)
-
-    // Limpa os marcadores $$
-    processedCode = processedCode.replace(/__App__\$\$/g, '__App__')
+    // Trata export default: captura o nome do componente para referência
+    // "export default function App()" → "function App()" e marca App como componente
+    let componentName = null
+    processedCode = processedCode.replace(/export\s+default\s+function\s+(\w+)/g, (_, name) => {
+      componentName = name
+      return 'function ' + name
+    })
+    processedCode = processedCode.replace(/export\s+default\s+/g, 'const __DefaultExport__ = ')
 
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"><\/script>
@@ -70,7 +70,7 @@ ${usesLucide ? 'const lucideReact = window.lucideReact || {};' : ''}
 ${usesRecharts ? 'const { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ComposedChart, Scatter, ScatterChart, Treemap, Funnel, FunnelChart } = window.Recharts || {};' : ''}
 ${processedCode}
 try {
-  const C = typeof __App__ !== 'undefined' ? __App__ : (typeof App !== 'undefined' ? App : null);
+  const C = ${componentName ? `typeof ${componentName} !== 'undefined' ? ${componentName} : null` : "typeof __DefaultExport__ !== 'undefined' ? __DefaultExport__ : (typeof App !== 'undefined' ? App : null)"};
   if (C) {
     const root = ReactDOM.createRoot ? ReactDOM.createRoot(document.getElementById('root')) : null;
     if (root) { root.render(React.createElement(C)); }
