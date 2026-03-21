@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Eye } from 'lucide-react'
-import { buildRenderableHTML } from '../utils/renderer'
+import { buildRenderableHTML, sanitizeCode } from '../utils/renderer'
 
 const TYPES = [
   { value: 'html', label: 'HTML' },
@@ -48,7 +48,7 @@ export default function AddEditModal({ isOpen, artifact, onSave, onClose }) {
       type,
       description: description.trim(),
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
-      code: code.trim(),
+      code: sanitizeCode(code.trim()),
     })
   }
 

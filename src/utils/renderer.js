@@ -8,6 +8,11 @@
 export function buildRenderableHTML(code, type) {
   if (!code) return '<html><body></body></html>'
 
+  // Sanitiza caracteres que iOS/macOS autocorrigem ao copiar/colar:
+  // en-dash (–) e em-dash (—) viram double-hyphen (--) em contextos CSS
+  // Isso conserta var(–bg) → var(--bg) e –-bg → --bg
+  code = sanitizeCode(code)
+
   if (type === 'html') {
     const trimmed = code.trim().toLowerCase()
     // Se o código já é um documento HTML completo, passa direto (só garante viewport)
@@ -123,6 +128,30 @@ a{color:#7c6bf0;}
   }
 
   return `<html><body><pre style="padding:16px;font-family:monospace;white-space:pre-wrap;">${escapeHtml(code)}</pre></body></html>`
+}
+
+/**
+ * Sanitiza código colado que sofreu autocorreção do iOS/macOS:
+ * - en-dash (–, U+2013) e em-dash (—, U+2014) → double hyphen (--)
+ *   quando aparecem em contextos CSS (custom properties, var() refs)
+ * - smart quotes (" " ' ') → aspas retas (" ')
+ */
+export function sanitizeCode(code) {
+  return code
+    // Fix en-dash/em-dash que deveriam ser -- em CSS custom properties
+    // var(–xxx) → var(--xxx)
+    .replace(/var\(\u2013/g, 'var(--')
+    .replace(/var\(\u2014/g, 'var(--')
+    // –-xxx: (property declarations with leading en-dash) → --xxx:
+    .replace(/\u2013-/g, '--')
+    .replace(/\u2014-/g, '--')
+    // Standalone en-dash used as -- in CSS (e.g., "color: var(–text)")
+    // Only replace when preceded by ( or start-of-value context
+    .replace(/\(\u2013/g, '(--')
+    .replace(/\(\u2014/g, '(--')
+    // Smart quotes → straight quotes
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'")
 }
 
 function escapeHtml(s) {
