@@ -12,13 +12,19 @@ export function buildRenderableHTML(code, type) {
     const trimmed = code.trim().toLowerCase()
     // Se o código já é um documento HTML completo, garante viewport meta para mobile
     if (trimmed.startsWith('<!doctype') || trimmed.startsWith('<html')) {
-      if (!code.includes('viewport')) {
-        return code.replace(/<head([^>]*)>/i, '<head$1><meta name="viewport" content="width=device-width, initial-scale=1.0">')
+      let result = code
+      // Injeta viewport se não tiver
+      if (!result.includes('viewport')) {
+        result = result.replace(/<head([^>]*)>/i, '<head$1><meta name="viewport" content="width=device-width, initial-scale=1.0">')
       }
-      return code
+      // Força light mode para renderizar como o Claude (evita dark mode do sistema)
+      if (!result.includes('color-scheme')) {
+        result = result.replace(/<head([^>]*)>/i, '<head$1><meta name="color-scheme" content="light"><style>:root{color-scheme:light;}</style>')
+      }
+      return result
     }
     // Fragmento HTML: wrapper mínimo sem estilos invasivos
-    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body>${code}</body></html>`
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="color-scheme" content="light"><style>:root{color-scheme:light;}</style></head><body>${code}</body></html>`
   }
 
   if (type === 'react') {
@@ -63,12 +69,13 @@ export function buildRenderableHTML(code, type) {
 
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"><\/script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"><\/script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"><\/script>
 <script src="https://cdn.tailwindcss.com"><\/script>
 ${cdnScripts}
-<style>body{margin:0;}#root{min-height:100vh;}</style>
+<style>:root{color-scheme:light;}body{margin:0;}#root{min-height:100vh;}</style>
 </head><body><div id="root"></div>
 <script type="text/babel">
 const { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext, Fragment, forwardRef, memo, lazy, Suspense } = React;
@@ -89,15 +96,17 @@ try {
   if (type === 'svg') {
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;}</style>
+<meta name="color-scheme" content="light">
+<style>:root{color-scheme:light;}body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;}</style>
 </head><body>${code}</body></html>`
   }
 
   if (type === 'mermaid') {
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"><\/script>
-<style>body{margin:20px;display:flex;justify-content:center;align-items:center;min-height:90vh;}</style>
+<style>:root{color-scheme:light;}body{margin:20px;display:flex;justify-content:center;align-items:center;min-height:90vh;background:#fff;}</style>
 </head><body><div class="mermaid">${escapeHtml(code)}</div>
 <script>mermaid.initialize({startOnLoad:true,theme:'dark'});<\/script></body></html>`
   }
@@ -105,9 +114,11 @@ try {
   if (type === 'markdown') {
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"><\/script>
 <style>
-body{font-family:Inter,-apple-system,sans-serif;margin:24px;line-height:1.7;max-width:800px;}
+:root{color-scheme:light;}
+body{font-family:Inter,-apple-system,sans-serif;margin:24px;line-height:1.7;max-width:800px;background:#fff;color:#1a1a2e;}
 h1,h2,h3{margin-top:1.5em;}
 code{background:rgba(127,127,127,0.15);padding:2px 6px;border-radius:4px;font-size:.9em;}
 pre{background:#1a1a2e;color:#e4e4ed;padding:16px;border-radius:8px;overflow-x:auto;}
