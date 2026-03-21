@@ -10,10 +10,15 @@ export function buildRenderableHTML(code, type) {
 
   if (type === 'html') {
     const trimmed = code.trim().toLowerCase()
-    // Se o código já é um documento HTML completo, renderiza sem alterações
-    if (trimmed.startsWith('<!doctype') || trimmed.startsWith('<html')) return code
+    // Se o código já é um documento HTML completo, garante viewport meta para mobile
+    if (trimmed.startsWith('<!doctype') || trimmed.startsWith('<html')) {
+      if (!code.includes('viewport')) {
+        return code.replace(/<head([^>]*)>/i, '<head$1><meta name="viewport" content="width=device-width, initial-scale=1.0">')
+      }
+      return code
+    }
     // Fragmento HTML: wrapper mínimo sem estilos invasivos
-    return `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>${code}</body></html>`
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body>${code}</body></html>`
   }
 
   if (type === 'react') {
@@ -57,6 +62,7 @@ export function buildRenderableHTML(code, type) {
     processedCode = processedCode.replace(/export\s+default\s+/g, 'const __DefaultExport__ = ')
 
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"><\/script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"><\/script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"><\/script>
@@ -82,12 +88,14 @@ try {
 
   if (type === 'svg') {
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;}</style>
 </head><body>${code}</body></html>`
   }
 
   if (type === 'mermaid') {
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"><\/script>
 <style>body{margin:20px;display:flex;justify-content:center;align-items:center;min-height:90vh;}</style>
 </head><body><div class="mermaid">${escapeHtml(code)}</div>
@@ -96,6 +104,7 @@ try {
 
   if (type === 'markdown') {
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"><\/script>
 <style>
 body{font-family:Inter,-apple-system,sans-serif;margin:24px;line-height:1.7;max-width:800px;}
